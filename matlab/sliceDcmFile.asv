@@ -1,0 +1,6 @@
+function y = sliceDcmFile(file, output)
+    [y,~,~] = dicomread(file.name);
+    
+    [~,name,~] = fileparts(file.name);
+    imwrite(y, [fullfile(output, name) '.jpg']);
+end

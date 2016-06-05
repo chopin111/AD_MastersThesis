@@ -1,0 +1,5 @@
+function y = sliceDcmFiles(sliceNo, file);
+    X = repmat(int16(0), [256 256 1 20]);
+    X(:,:,1,p) = dicomread(filename);
+
+end

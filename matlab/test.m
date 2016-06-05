@@ -1,1 +1,1 @@
-getSlices('E:\mgr-dane\MIRIAD\miriad');
+getSlices('E:\mgr-dane\');
