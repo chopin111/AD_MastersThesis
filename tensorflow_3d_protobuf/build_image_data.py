@@ -76,7 +76,13 @@ import threading
 import numpy as np
 import tensorflow as tf
 
+np.set_printoptions(threshold=np.nan)
+
 import nibabel as nib
+
+import matplotlib.pyplot as plt
+
+from image_reshaper import reshapeImage
 
 tf.app.flags.DEFINE_string('train_directory', '/tmp/',
                            'Training data directory')
@@ -104,10 +110,10 @@ tf.app.flags.DEFINE_string('labels_file', '', 'Labels file')
 
 
 FLAGS = tf.app.flags.FLAGS
-FLAGS.width = 128
-FLAGS.height = 128
-FLAGS.depth = 40 # 3
 
+def plotImage(image):
+    plt.imshow(image.T, cmap='gray', origin="lower")
+    plt.show()
 
 def _int64_feature(value):
   """Wrapper for inserting int64 features into Example proto."""
@@ -164,20 +170,13 @@ def _process_image(filename):
   image_data = nib.load(filename)
   image = image_data.get_data()
 
+  image = reshapeImage(image)
+
   height = image.shape[0]
   width = image.shape[1]
   depth = image.shape[2]
 
-  image = np.delete(image, range(FLAGS.depth, depth), axis = 2)
-
-  tensor = tf.convert_to_tensor(image, dtype=tf.float32)
-  resized_image = tf.image.resize_images(images=tensor, size=(FLAGS.width,FLAGS.height), method=1)
-
-  image = tf.Session().run(resized_image)
-
-  image = np.asarray(image, dtype='float32')
-
-  return image.tobytes(), depth, height, width
+  return image.tobytes(), depth, height, width, image
 
 
 def _process_image_files_batch(thread_index, ranges, name, filenames,
@@ -209,44 +208,55 @@ def _process_image_files_batch(thread_index, ranges, name, filenames,
 
   counter = 0
   for s in range(num_shards_per_batch):
-    # Generate a sharded version of the file name, e.g. 'train-00002-of-00010'
-    shard = thread_index * num_shards_per_batch + s
-    output_filename = '%s-%.5d-of-%.5d' % (name, shard, num_shards)
-    output_file = os.path.join(FLAGS.output_directory, output_filename)
-    writer = tf.python_io.TFRecordWriter(output_file)
+      with tf.Graph().as_default():
+        # Generate a sharded version of the file name, e.g. 'train-00002-of-00010'
+        shard = thread_index * num_shards_per_batch + s
+        output_filename = '%s-%.5d-of-%.5d' % (name, shard, num_shards)
+        output_file = os.path.join(FLAGS.output_directory, output_filename)
+        writer = tf.python_io.TFRecordWriter(output_file)
 
-    shard_counter = 0
-    files_in_shard = np.arange(shard_ranges[s], shard_ranges[s + 1], dtype=int)
-    for i in files_in_shard:
-      filename = filenames[i]
-      label = labels[i]
-      text = texts[i]
+        shard_counter = 0
+        files_in_shard = np.arange(shard_ranges[s], shard_ranges[s + 1], dtype=int)
+        for i in files_in_shard:
 
-      print ("Processing %s with label %s" % (filename[-10:0], label))
+            filename = filenames[i]
+            label = labels[i]
+            text = texts[i]
+            #print(filename)
+            try:
 
-      #try:
-      image_buffer, depth, height, width = _process_image(filename)
-      #except Exception as e:
-        #print(e)
-        #print('SKIPPED: Unexpected eror while decoding %s.' % filename)
-        #continue
+              #print ("Processing %s with label %s" % (filename[-10:0], label))
 
-      example = _convert_to_example(filename, image_buffer, label,
-                                    text, depth, height, width)
-      writer.write(example.SerializeToString())
-      shard_counter += 1
-      counter += 1
+              #try:
+              image_buffer, depth, height, width, image_source = _process_image(filename)
+              #except Exception as e:
+                #print(e)
+                #print('SKIPPED: Unexpected eror while decoding %s.' % filename)
+                #continue
 
-      if not counter % 1000:
-        print('%s [thread %d]: Processed %d of %d images in thread batch.' %
-              (datetime.now(), thread_index, counter, num_files_in_thread))
+              #print(image_source)
+              print(depth, height, width)
+              print(image_source.shape)
+              #plotImage(image_source[:, :, int(depth/2)])
+
+              example = _convert_to_example(filename, image_buffer, label,
+                                            text, depth, height, width)
+              writer.write(example.SerializeToString())
+              shard_counter += 1
+              counter += 1
+
+              if not counter % 1000:
+                #print('%s [thread %d]: Processed %d of %d images in thread batch.' %
+                #      (datetime.now(), thread_index, counter, num_files_in_thread))
+                sys.stdout.flush()
+            except Exception as e:
+                print("Exception error in file %s (%s): %s" % (filename, e.errno, e.strerror))
+
+        writer.close()
+        print('%s [thread %d]: Wrote %d images to %s' %
+              (datetime.now(), thread_index, shard_counter, output_file))
         sys.stdout.flush()
-
-    writer.close()
-    print('%s [thread %d]: Wrote %d images to %s' %
-          (datetime.now(), thread_index, shard_counter, output_file))
-    sys.stdout.flush()
-    shard_counter = 0
+        shard_counter = 0
   print('%s [thread %d]: Wrote %d images to %d shards.' %
         (datetime.now(), thread_index, counter, num_files_in_thread))
   sys.stdout.flush()

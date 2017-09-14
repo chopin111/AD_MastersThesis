@@ -5,32 +5,34 @@ import random
 import shutil
 import collections
 
-data_dir = "./data-raw"
-dist_dir = "./data"
+data_dir = "/media/piotr/CE58632058630695/_dane-mgr"
+dist_dir = "/media/piotr/CE58632058630695/data-sorted"
 
 file_stats = collections.Counter()
 
 validate_ratio = 0.3
 
-def copyNiiFilesForSubject(subject, score):
+def copyNiiFilesForSubject(subject, score, timestamps):
     copied_files_count = 0
-    file_dir = os.path.join(data_dir, subject, '**/*.nii')
-    for file_path in glob.iglob(file_dir, recursive=True):
-        filename = os.path.basename(file_path)
+    for timestamp in timestamps:
+        file_dir = os.path.join(data_dir, subject, '*', timestamp, '**/*.nii')
+        print(file_dir)
+        for file_path in glob.iglob(file_dir, recursive=True):
+            filename = os.path.basename(file_path)
 
-        dist_image_dir = os.path.join(dist_dir, 'train', score)
+            dist_image_dir = os.path.join(dist_dir, 'train', score)
 
-        if not os.path.exists(dist_image_dir):
-            os.makedirs(dist_image_dir)
+            if not os.path.exists(dist_image_dir):
+                os.makedirs(dist_image_dir)
 
-        dist_image_path = os.path.join(dist_image_dir, filename)
+            dist_image_path = os.path.join(dist_image_dir, filename)
 
-        print ("Copying %s to %s" % (file_path, dist_image_path))
+            #print ("Copying %s to %s" % (file_path, dist_image_path))
 
-        file_stats[score] += 1
+            file_stats[score] += 1
 
-        shutil.copyfile(file_path, dist_image_path)
-        copied_files_count += 1
+            shutil.copyfile(file_path, dist_image_path)
+            copied_files_count += 1
     return copied_files_count
 
 def moveValidationData():
@@ -67,9 +69,20 @@ def saveLables(labels):
         for label in labels:
             labels_file.write("%s\n" % (label))
 
+def timestampToStr(timestamp):
+    # 2006-11-30T05:29:33.0
+    # 2006-04-18_08_20_30.0
+    return timestamp.replace('T', '_').replace(':', '_').replace(' ', '_')
+
 def loadXmlMetadata(data_dir):
     labels = set()
-    for xml_file in glob.glob(data_dir):
+    dirs = glob.glob(data_dir)
+    xml_file_count = len(dirs)
+    xml_current_file = 0
+    for xml_file in dirs:
+        xml_current_file += 1
+        print("Parsing %d/%d" % (xml_current_file, xml_file_count))
+
         root_element = xml.etree.ElementTree.parse(xml_file).getroot()
         score = None
         subject = None
@@ -79,9 +92,12 @@ def loadXmlMetadata(data_dir):
         for assessment in root_element.findall(".//assessmentScore[@attribute='MMSCORE']"):
             score = assessment.text
             break
+        timestamps = []
+        for timestamp in root_element.findall(".//dateAcquired"):
+            timestamps.append(timestampToStr(timestamp.text))
 
         if subject is not None and score is not None:
-            if copyNiiFilesForSubject(subject, score) > 0:
+            if copyNiiFilesForSubject(subject, score, timestamps) > 0:
                 labels.add(score)
 
     saveLables(sorted(labels))
