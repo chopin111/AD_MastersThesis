@@ -5,12 +5,28 @@ import random
 import shutil
 import collections
 
+# Path hack.
+import sys, os
+sys.path.insert(0, os.path.abspath('..'))
+
+from medicalutils import medicalutils
+
 data_dir = "/media/piotr/CE58632058630695/_dane-mgr"
-dist_dir = "/media/piotr/CE58632058630695/data-sorted"
+dist_dir = "/media/piotr/CE58632058630695/data-sorted-5"
 
 file_stats = collections.Counter()
 
 validate_ratio = 0.3
+shouldMergeLabels = True #whenever should use 5 (27-30 24-26 19-23 11-18  0-10 groups) or full mmse score (0 to 30)
+
+
+
+def convertScoreToLabel(score):
+    global shouldMergeLabels
+    if shouldMergeLabels:
+        return medicalutils.getSicknessLvl(score)['label']
+    else:
+        return score
 
 def copyNiiFilesForSubject(subject, score, timestamps):
     copied_files_count = 0
@@ -92,6 +108,9 @@ def loadXmlMetadata(data_dir):
         for assessment in root_element.findall(".//assessmentScore[@attribute='MMSCORE']"):
             score = assessment.text
             break
+        if score is not None:
+            score = convertScoreToLabel(score)
+            
         timestamps = []
         for timestamp in root_element.findall(".//dateAcquired"):
             timestamps.append(timestampToStr(timestamp.text))

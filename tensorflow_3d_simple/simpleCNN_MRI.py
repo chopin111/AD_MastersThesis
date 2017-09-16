@@ -1,5 +1,3 @@
-nLabel = 31
-
 # Start TensorFlow InteractiveSession
 import gc
 import tensorflow as tf
@@ -7,12 +5,15 @@ import numpy as np
 
 import os
 
-from visualization import DashboardVis, Telemetry
-
 import random
-
 import time
 from datetime import date
+
+# Path hack.
+import sys
+sys.path.insert(0, os.path.abspath('..'))
+
+from learnutils.visualization import DashboardVis, Telemetry
 
 ######################################
 ######################################
@@ -22,8 +23,7 @@ from datetime import date
 ######################################
 ######################################
 
-
-nLabel = 31
+nLabel = 5
 
 FLAGS = tf.app.flags.FLAGS
 FLAGS.width = 45
@@ -81,31 +81,31 @@ def getImage(filenames):
 
 
 
-train_files = ["/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00000-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00001-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00002-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00003-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00004-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00005-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00006-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00007-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00008-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00009-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00010-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00011-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00012-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00013-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00014-of-00016",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/train-00015-of-00016"]
+train_files = ["/media/piotr/CE58632058630695/data-tf-5/train-00000-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00001-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00002-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00003-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00004-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00005-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00006-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00007-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00008-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00009-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00010-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00011-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00012-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00013-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00014-of-00016",
+"/media/piotr/CE58632058630695/data-tf-5/train-00015-of-00016"]
 
-validation_files = ["/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/validation-00000-of-00008",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/validation-00001-of-00008",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/validation-00002-of-00008",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/validation-00003-of-00008",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/validation-00004-of-00008",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/validation-00005-of-00008",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/validation-00006-of-00008",
-"/media/piotr/CE58632058630695/data-tensorflow-cropped-thin/validation-00007-of-00008"]
+validation_files = ["/media/piotr/CE58632058630695/data-tf-5/validation-00000-of-00008",
+"/media/piotr/CE58632058630695/data-tf-5/validation-00001-of-00008",
+"/media/piotr/CE58632058630695/data-tf-5/validation-00002-of-00008",
+"/media/piotr/CE58632058630695/data-tf-5/validation-00003-of-00008",
+"/media/piotr/CE58632058630695/data-tf-5/validation-00004-of-00008",
+"/media/piotr/CE58632058630695/data-tf-5/validation-00005-of-00008",
+"/media/piotr/CE58632058630695/data-tf-5/validation-00006-of-00008",
+"/media/piotr/CE58632058630695/data-tf-5/validation-00007-of-00008"]
 
 label, image = getImage(train_files)
 vlabel, vimage = getImage(validation_files)
