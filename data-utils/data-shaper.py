@@ -110,7 +110,7 @@ def loadXmlMetadata(data_dir):
             break
         if score is not None:
             score = convertScoreToLabel(score)
-            
+
         timestamps = []
         for timestamp in root_element.findall(".//dateAcquired"):
             timestamps.append(timestampToStr(timestamp.text))

@@ -153,7 +153,7 @@ def _convert_to_example(filename, image_buffer, label, text, depth, height, widt
 
 
 
-def _process_image(filename):
+def _process_image(filename, step=0):
   """Process a single image file.
 
   Args:
@@ -170,7 +170,8 @@ def _process_image(filename):
   image_data = nib.load(filename)
   image = image_data.get_data()
 
-  image = reshapeImage(image, reshape_type="3d")
+  print("Current step: %d" % step)
+  image = reshapeImage(image, reshape_type="2d-multiple", step=step)
 
   height = image.shape[0]
   width = image.shape[1]
@@ -225,30 +226,22 @@ def _process_image_files_batch(thread_index, ranges, name, filenames,
             #print(filename)
             try:
 
-              #print ("Processing %s with label %s" % (filename[-10:0], label))
+              for i in range(0, 10):
+                  image_buffer, depth, height, width, image_source = _process_image(filename, i)
 
-              #try:
-              image_buffer, depth, height, width, image_source = _process_image(filename)
-              #except Exception as e:
-                #print(e)
-                #print('SKIPPED: Unexpected eror while decoding %s.' % filename)
-                #continue
+                  print(depth, height, width)
+                  print(image_source.shape)
 
-              #print(image_source)
-              print(depth, height, width)
-              print(image_source.shape)
-              #plotImage(image_source[:, :, int(depth/2)])
+                  example = _convert_to_example(filename, image_buffer, label,
+                                                text, depth, height, width)
+                  writer.write(example.SerializeToString())
+                  shard_counter += 1
+                  counter += 1
 
-              example = _convert_to_example(filename, image_buffer, label,
-                                            text, depth, height, width)
-              writer.write(example.SerializeToString())
-              shard_counter += 1
-              counter += 1
-
-              if not counter % 1000:
-                #print('%s [thread %d]: Processed %d of %d images in thread batch.' %
-                #      (datetime.now(), thread_index, counter, num_files_in_thread))
-                sys.stdout.flush()
+                  if not counter % 1000:
+                    #print('%s [thread %d]: Processed %d of %d images in thread batch.' %
+                    #      (datetime.now(), thread_index, counter, num_files_in_thread))
+                    sys.stdout.flush()
             except Exception as e:
                 print("Exception error in file %s (%s): %s" % (filename, e.errno, e.strerror))
 
